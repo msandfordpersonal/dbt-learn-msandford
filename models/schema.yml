@@ -1,0 +1,88 @@
+version: 2
+models:
+  - name: customers
+    description: "{{ doc('customers') }}"
+    columns:
+      - name: customer_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: first_order_date
+        description: Date when the customer first places an order. NULL when a customer has not yet placed an order.
+
+  - name: stg_customers
+    description: This model cleans up customer data
+    columns:
+      - name: customer_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_orders
+    description: This model cleans up order data
+    columns:
+      - name: order_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['placed', 'shipped', 'completed', 'return_pending', 'returned']
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+  - name: stg_payments
+    description: This model cleans up payments data
+    columns:
+      - name: payment_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Foreign key.  The id of the order
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_orders')
+              field: order_id
+      - name: payment_status
+        description: The status of the order (success or fail)
+        tests:
+          - accepted_values:
+              values: ['success', 'fail']
+
+  - name: orders
+    description: derived orders table to clean up the order data and combine with the payments table
+    columns: 
+      - name: order_id
+        description: primary key
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_payments')
+              field: order_id
+
+      - name: customer_id
+        description: unique customer identifier
+        tests:
+          - not_null
+      - name: amount
+        description: the total order amount
+        tests:
+          - not_null
+      - name: order_date
+        description: the date of the order
+      - name: status
+        description: the status of the order
+ 
+
